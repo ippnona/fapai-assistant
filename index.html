@@ -319,6 +319,56 @@
             padding: 40px;
             color: #ccc;
         }
+
+        /* ===== 诊断模式主题 ===== */
+        body.diagnosis-mode {
+            background: #f3eefb;  /* 淡紫色背景 */
+        }
+        body.diagnosis-mode .header {
+            background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+        }
+        body.diagnosis-mode .message.user {
+            background: #8b5cf6;
+        }
+        body.diagnosis-mode .input-container button {
+            background: linear-gradient(135deg, #a78bfa, #7c3aed);  /* 紫色渐变 */
+            font-weight: 600;
+            letter-spacing: 1px;
+            padding: 10px 24px;
+        }
+        body.diagnosis-mode .quick-buttons {
+            background: #ede9f5;  /* 按钮栏淡紫底 */
+            border-top-color: #d4c9e8;
+        }
+        body.diagnosis-mode .input-container textarea:focus {
+            border-color: #8b5cf6;
+        }
+        /* 诊断模式过渡动画 */
+        .header, .chat-container, .input-container, .quick-buttons, body {
+            transition: all 0.4s ease;
+        }
+        /* 退出诊断按钮（仅在诊断模式显示） */
+        .exit-diagnosis-btn {
+            display: none;
+            position: fixed;
+            top: 12px;
+            left: 16px;
+            z-index: 998;
+            background: rgba(255,255,255,0.25);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.4);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        body.diagnosis-mode .exit-diagnosis-btn {
+            display: block;
+        }
+        .exit-diagnosis-btn:hover {
+            background: rgba(255,255,255,0.35);
+        }
     </style>
 </head>
 <body>
@@ -354,6 +404,9 @@
         <textarea id="userInput" placeholder="输入客户情况，比如：客户说太贵了..." rows="1" oninput="autoResize(this)" onkeydown="handleKeydown(event)"></textarea>
         <button id="sendBtn" onclick="sendMessage()">发送</button>
     </div>
+
+    <!-- 退出诊断模式按钮 -->
+    <button class="exit-diagnosis-btn" onclick="exitDiagnosis()">✕ 退出诊断</button>
 
     <!-- 数据收集按钮 -->
     <button class="data-panel-btn" onclick="toggleDataPanel()" title="查看对话数据">📊</button>
@@ -952,8 +1005,29 @@
 
         function sendQuick(text) { document.getElementById('userInput').value = text; sendMessage(); }
 
-        // ===== 销售诊断模式 =====
+        // ===== 销售诊断模式（带视觉切换） =====
+        let isDiagnosisMode = false;
+        let originalHeaderText, originalHeaderSub;
+
         function sendDiagnosis() {
+            // 切换到诊断视觉模式
+            if (!isDiagnosisMode) {
+                isDiagnosisMode = true;
+                
+                // 保存原始文字
+                originalHeaderText = document.querySelector('.header h1').textContent;
+                originalHeaderSub = document.querySelector('.header p').textContent;
+                
+                // 应用诊断主题
+                document.body.classList.add('diagnosis-mode');
+                document.querySelector('.header h1').innerHTML = '🔍 <strong>销售诊断模式</strong>';
+                document.querySelector('.header p').textContent = '正在分析您的销售问题，请按引导回答';
+                document.getElementById('sendBtn').textContent = '诊断';
+                
+                // 滚动到顶部
+                document.getElementById('chatContainer').scrollTop = 0;
+            }
+
             const diagPrompt = `【销售诊断模式】请帮我诊断我的销售问题。
 
 我会按你的引导逐步提供信息，请你：
@@ -963,10 +1037,19 @@
 
 开始吧，先问我第一个问题。`;
             document.getElementById('userInput').value = '';
-            // 直接作为消息发送
             const input = document.getElementById('userInput');
             input.value = diagPrompt;
             sendMessage();
+        }
+
+        function exitDiagnosis() {
+            isDiagnosisMode = false;
+            
+            // 恢复原始样式
+            document.body.classList.remove('diagnosis-mode');
+            document.querySelector('.header h1').innerHTML = originalHeaderText || '🏠 法拍房销售助手';
+            document.querySelector('.header p').textContent = originalHeaderSub || '输入客户情况，获取专业话术建议';
+            document.getElementById('sendBtn').textContent = '发送';
         }
 
         function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
