@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>法拍房销售助手</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .header h1 { font-size: 18px; font-weight: 600; }
+        .header p { font-size: 12px; opacity: 0.9; margin-top: 4px; }
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .message {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.6;
+            word-wrap: break-word;
+        }
+        .message.user {
+            align-self: flex-end;
+            background: #667eea;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .message.assistant {
+            align-self: flex-start;
+            background: white;
+            color: #333;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .message.assistant h3 {
+            font-size: 13px;
+            color: #667eea;
+            margin: 12px 0 8px 0;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #eee;
+        }
+        .message.assistant h3:first-child { margin-top: 0; }
+        .message.assistant blockquote {
+            background: #f8f9fa;
+            padding: 10px 14px;
+            margin: 8px 0;
+            border-left: 3px solid #667eea;
+            border-radius: 0 8px 8px 0;
+            font-style: normal;
+        }
+        .message-content { white-space: pre-line; }
+        .feedback {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #eee;
+        }
+        .feedback button {
+            background: none;
+            border: 1px solid #ddd;
+            padding: 4px 14px;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .feedback button:hover { background: #f0f0f0; }
+        .feedback button.active.good { background: #52c41a; color: white; border-color: #52c41a; }
+        .feedback button.active.bad { background: #ff4d4f; color: white; border-color: #ff4d4f; }
+        .input-container {
+            background: white;
+            padding: 12px 16px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        .input-container textarea {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 10px 16px;
+            font-size: 14px;
+            resize: none;
+            outline: none;
+            min-height: 40px;
+            max-height: 120px;
+            font-family: inherit;
+        }
+        .input-container textarea:focus { border-color: #667eea; }
+        .input-container button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .input-container button:hover { background: #5a6fd6; }
+        .input-container button:disabled { background: #ccc; cursor: not-allowed; }
+        .typing {
+            display: flex;
+            gap: 4px;
+            padding: 12px 16px;
+            align-self: flex-start;
+            background: white;
+            border-radius: 16px;
+            border-bottom-left-radius: 4px;
+        }
+        .typing span {
+            width: 8px; height: 8px;
+            background: #999;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+        .typing span:nth-child(2) { animation-delay: 0.2s; }
+        .typing span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-10px)} }
+        .quick-buttons {
+            display: flex;
+            gap: 8px;
+            padding: 8px 16px;
+            overflow-x: auto;
+            background: white;
+            border-top: 1px solid #eee;
+        }
+        .quick-buttons button {
+            white-space: nowrap;
+            background: #f0f0f0;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .quick-buttons button:hover { background: #667eea; color: white; }
+        .toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 13px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .toast.show { opacity: 1; }
+        .welcome-card { text-align: center; padding: 30px 20px; color: #888; }
+        .welcome-card h2 { color: #333; margin-bottom: 10px; font-size: 18px; }
+        .welcome-card p { font-size: 13px; line-height: 1.6; }
+
+        /* 数据面板 */
+        .data-panel-btn {
+            position: fixed;
+            top: 12px;
+            right: 16px;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.25);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.4);
+            font-size: 18px;
+            cursor: pointer;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        .data-panel-btn:hover { background: rgba(255,255,255,0.35); }
+        .data-panel-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 40px;
+            overflow-y: auto;
+        }
+        .data-panel-overlay.show { display: flex; }
+        .data-panel-content {
+            background: white;
+            width: 90%;
+            max-width: 800px;
+            max-height: 85vh;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 0 auto 40px;
+            display: flex;
+            flex-direction: column;
+        }
+        .data-panel-header {
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .data-panel-header h3 { font-size: 16px; }
+        .data-panel-header button {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .data-panel-body {
+            padding: 16px 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .stat-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .stat-card {
+            flex: 1;
+            background: #f8f9fa;
+            padding: 14px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-card .num { font-size: 24px; font-weight: bold; color: #667eea; }
+        .stat-card .label { font-size: 12px; color: #888; margin-top: 4px; }
+        .conv-item {
+            background: #fafafa;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 10px;
+        }
+        .conv-item .time { font-size: 11px; color: #aaa; margin-bottom: 6px; }
+        .conv-item .q {
+            background: #e8eaf6;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+        .conv-item .a {
+            background: #f0f0f0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            white-space: pre-line;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .conv-item .tags { display: flex; gap: 6px; margin-top: 8px; }
+        .tag {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+        .tag-good { background: #e8f5e9; color: #2e7d32; }
+        .tag-bad { background: #ffebee; color: #c62828; }
+        .tag-none { background: #f5f5f5; color: #999; }
+        .export-btn {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+        .clear-btn {
+            width: 100%;
+            padding: 10px;
+            background: transparent;
+            color: #ff4d4f;
+            border: 1px solid #ff4d4f;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏠 法拍房销售助手</h1>
+        <p>输入客户情况，获取专业话术建议</p>
+    </div>
+    
+    <div class="quick-buttons">
+        <button onclick="sendQuick('客户说太贵了怎么办')">📌 客户说太贵</button>
+        <button onclick="sendQuick('客户要考虑一下')">📌 客户要考虑</button>
+        <button onclick="sendQuick('客户问有什么风险')">📌 客户问风险</button>
+        <button onclick="sendQuick('客户没买过房能参拍吗')">📌 没买过能拍吗</button>
+        <button onclick="sendQuick('客户问课程多少钱')">📌 问价格</button>
+        <button onclick="sendQuick('客户问你们靠谱吗')">📌 问是否靠谱</button>
+    </div>
+    
+    <div class="chat-container" id="chatContainer">
+        <div class="welcome-card">
+            <h2>👋 你好，我是法拍房销售助手</h2>
+            <p>请描述客户的情况，我会帮你：<br><br>
+            • 📊 分析客户意向等级<br>
+            • 💬 提供可直接使用的话术<br>
+            • ⚠️ 给出注意事项和转化策略</p>
+        </div>
+    </div>
+    
+    <div class="input-container">
+        <textarea id="userInput" placeholder="输入客户情况，比如：客户说太贵了..." rows="1" oninput="autoResize(this)" onkeydown="handleKeydown(event)"></textarea>
+        <button id="sendBtn" onclick="sendMessage()">发送</button>
+    </div>
+
+    <!-- 数据收集按钮 -->
+    <button class="data-panel-btn" onclick="toggleDataPanel()" title="查看对话数据">📊</button>
+
+    <!-- 数据面板 -->
+    <div class="data-panel-overlay" id="dataPanel" onclick="if(event.target===this)this.classList.remove('show')">
+        <div class="data-panel-content">
+            <div class="data-panel-header">
+                <h3>📊 对话数据统计</h3>
+                <button onclick="document.getElementById('dataPanel').classList.remove('show')">关闭</button>
+            </div>
+            <div class="data-panel-body" id="dataPanelBody"></div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ===== 配置区域 =====
+        const API_KEY = 'sk-rkhnlqcqsriybfncvbdbubnrjnnznvvtsfzlaiaydvbngwmh';
+        const API_URL = 'https://api.siliconflow.cn/v1/chat/completions';
+        const MODEL = 'deepseek-ai/DeepSeek-V3';
+        // ===================
+
+        const SYSTEM_PROMPT = `你是XX公司法拍房业务的资深销售顾问，拥有5年以上销冠经验。你的任务是帮助公司销售员工应对各种客户情况，提供专业的客户分析、话术建议和转化策略。
+
+## 公司业务
+
+**产品线：**
+1. 线上直播课：系统讲解法拍房全流程知识
+2. 线下实操课：带看真实房源、模拟竞拍演练
+3. 拍房辅助服务：房源筛选、风险评估、竞拍指导、过户协助
+
+**目标客户：**
+- 想买法拍房但不懂流程的普通人
+- 有一定资金实力、追求性价比的购房者
+- 对房产投资感兴趣但缺乏经验的人群
+
+## 核心卖点
+- 价格优势：比市场价低20%-40%
+- 专业风控：提前排查产权、债务、占用等风险
+- 全程陪跑：从学习到成交一站式服务
+- 成功案例：已帮助XXX位客户成功拍房
+
+## 客户常见顾虑
+1. **价格顾虑**："太贵了"、"能不能便宜点"
+2. **信任顾虑**："法拍房有风险吧"、"你们靠谱吗"
+3. **决策顾虑**："我再考虑一下"、"我先自己研究研究"
+4. **能力顾虑**："我没买过房能参拍吗"、"流程太复杂了"
+5. **竞争顾虑**："抢不到怎么办"、"保证金会退吗"
+
+## 回答格式
+
+当员工描述客户情况时，请按以下格式输出：
+
+### 📊 客户意向判断
+- 意向等级：高/中/低
+- 核心需求：XXX
+- 主要顾虑：XXX
+
+### 💬 推荐话术（3条，可直接复制）
+
+**话术1（主推）：**
+> [话术内容]
+
+**话术2（备选）：**
+> [话术内容]
+
+**话术3（逼单/跟进）：**
+> [话术内容]
+
+### ⚠️ 注意事项
+- [提醒员工注意的点]
+- [下一步行动建议]
+
+### 🎯 转化策略
+- 推荐产品：线上课/线下课/辅助服务
+- 跟进时机：XXX
+- 关键动作：XXX
+
+## 特殊情况处理
+
+### 当客户说"太贵了"
+1. 先认同："理解您的考虑，投资确实需要谨慎"
+2. 算笔账：对比试错成本（保证金损失、时间成本）
+3. 给台阶："我们可以先报个线上课，几百块先系统了解一下"
+
+### 当客户说"我再考虑一下"
+1. 追问顾虑："您主要是担心哪方面呢？是价格还是风险？"
+2. 限时优惠："这周报名有个早鸟价..."（如有）
+3. 约定跟进："那我周三再联系您，到时候给您发几个最新房源"
+
+### 当客户说"法拍房有风险"
+1. 承认风险："您说得对，法拍房确实有风险，所以才需要专业指导"
+2. 展示专业：列举常见风险及我们的排查方法
+3. 案例佐证：分享成功规避风险的真实案例
+
+## 成功案例库（用于建立信任、促进转化）
+
+**案例1：深圳豪宅捡漏**
+- 估值6000万的豪宅，我们指导客户4500万成交，节省1500万
+- 客户反馈："一开始觉得法拍房水很深不敢碰，跟着团队走完一遍流程，真的能省巨款"
+- 适用场景：客户问"你们靠谱吗"、"有没有成功案例"
+
+**案例2：最难清场盘一次性收7套**
+- 南山桃源里家园被称为2025年最难清场楼盘
+- 我们提前3个月介入调查，制定个性化腾退方案，一次性成功收7套
+- 适用场景：客户担心腾退/占用问题、"这房子有人住怎么办"
+
+**案例3：首次参拍小白2个月拿房**
+- 客户第一次接触法拍房，完全不懂流程
+- 从参加线上课→签约VIP→筛选6套房源→尽调确认→竞拍成交，共2个月
+- 最终低于市场价124万拿下，4个月内拿到钥匙
+- 适用场景：客户说"我没买过房/第一次弄这个"
+
+**案例4：工薪阶层换大房，预算内拍到**
+- 工薪客户想换大房但预算有限，二手房看了很久没合适的
+- 委托竞拍模式：明确心理价位→严格按预算出价→预算范围内成功拍得
+- 适用场景：客户担心"竞拍会不会超出预算"
+
+**案例5：算账对比 — 法拍房vs二手房（省120万+）**
+- 以实际案例：二手房总价约640万（含中介费），法拍房总成本约516万+服务费
+- 扣掉服务费后仍比二手房便宜几十到上百万元
+- 适用场景：客户说"太贵了"、"自己研究不行吗"
+
+## 禁忌事项
+- ❌ 不要承诺"零风险"，法拍房本身有固有风险
+- ❌ 不要贬低客户"不懂"，要引导教育
+- ❌ 不要过度逼单，法拍房决策周期长，要有耐心
+- ❌ 不要泄露其他客户的具体房源信息（隐私保护）`;
+
+        let conversationHistory = [];
+        
+        // ===== 数据收集 =====
+        const STORAGE_KEY = '_fapai_convos';
+
+        function loadConversations() {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        }
+
+        function saveConversation(userMsg, aiReply) {
+            let convos = loadConversations();
+            convos.push({
+                id: Date.now(),
+                time: new Date().toISOString(),
+                question: userMsg,
+                answer: aiReply,
+                feedback: null  // null | 'good' | 'bad'
+            });
+            // 保留最近500条
+            if (convos.length > 500) convos = convos.slice(-500);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(convos));
+        }
+
+        function updateFeedback(convoId, type) {
+            let convos = loadConversations();
+            const item = convos.find(c => c.id === convoId);
+            if (item) item.feedback = type;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(convos));
+        }
+
+        // ===== 数据面板 =====
+        const PANEL_PASSWORD = '942134';
+        
+        function toggleDataPanel() {
+            // 先要求输入密码
+            const pw = prompt('🔒 请输入密码查看数据：');
+            if (pw === null) return; // 用户点了取消
+            if (pw !== PANEL_PASSWORD) {
+                alert('密码错误！');
+                return;
+            }
+            document.getElementById('dataPanel').classList.add('show');
+            renderDataPanel();
+        }
+
+        function renderDataPanel() {
+            const convos = loadConversations();
+            const body = document.getElementById('dataPanelBody');
+
+            if (convos.length === 0) {
+                body.innerHTML = '<div class="empty-state">暂无对话记录<br><small style="color:#ccc">员工使用后会自动收集</small></div>';
+                return;
+            }
+
+            // 统计
+            const total = convos.length;
+            const goodCount = convos.filter(c => c.feedback === 'good').length;
+            const badCount = convos.filter(c => c.feedback === 'bad').length;
+
+            // 问题分类统计
+            const categories = {};
+            convos.forEach(c => {
+                let cat = '其他';
+                const q = c.question;
+                if (q.includes('贵')) cat = '价格异议';
+                else if (q.includes('考虑') || q.includes('看看')) cat = '犹豫/拖延';
+                else if (q.includes('风险') || q.includes('靠谱')) cat = '信任问题';
+                else if (q.includes('价格') || q.includes('多少')) cat = '价格咨询';
+                else if (q.includes('没买过') || q.includes('能参拍')) cat = '资质咨询';
+                else if (q.includes('课程') || q.includes('服务')) cat = '产品咨询';
+                categories[cat] = (categories[cat] || 0) + 1;
+            });
+
+            let statsHtml = `
+                <div class="stat-row">
+                    <div class="stat-card"><div class="num">${total}</div><div class="label">总对话数</div></div>
+                    <div class="stat-card"><div class="num">${goodCount}</div><div class="label">👍 有用</div></div>
+                    <div class="stat-card"><div class="num">${badCount}</div><div class="label">👎 需改进</div></div>
+                    <div class="stat-card"><div class="num">${total > 0 ? Math.round(goodCount/(goodCount+badCount)*100) : 0}%</div><div class="label">好评率</div></div>
+                </div>
+                <h4 style="margin-bottom:10px;font-size:14px;">📋 问题类型分布</h4>
+                <div class="stat-row" style="margin-bottom:20px;">
+                    ${Object.entries(categories).map(([k,v]) =>
+                        `<div class="stat-card"><div class="num">${v}</div><div class="label">${k}</div></div>`
+                    ).join('')}
+                </div>
+                <h4 style="margin-bottom:10px;font-size:14px;">💬 最近对话记录（倒序）</h4>
+            `;
+
+            // 最近20条对话
+            const recent = [...convos].reverse().slice(0, 20);
+            statsHtml += recent.map(c => `
+                <div class="conv-item">
+                    <div class="time">⏰ ${new Date(c.time).toLocaleString('zh-CN')}</div>
+                    <div class="q">❓ ${escapeHtml(c.question)}</div>
+                    <div class="a">💬 ${escapeHtml(c.answer.substring(0, 300))}${c.answer.length > 300 ? '...' : ''}</div>
+                    <div class="tags">
+                        <span class="tag tag-${c.feedback || 'none'}">${
+                            c.feedback === 'good' ? '👍 有用' :
+                            c.feedback === 'bad' ? '👎 需改进' : '○ 未评价'
+                        }</span>
+                    </div>
+                </div>
+            `).join('');
+
+            statsHtml += `
+                <button class="export-btn" onclick="exportData()">📥 导出所有数据（CSV）</button>
+                <button class="clear-btn" onclick="clearData()">🗑 清除本地数据</button>
+            `;
+
+            body.innerHTML = statsHtml;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function exportData() {
+            const convos = loadConversations();
+            if (convos.length === 0) { alert('没有数据可导出'); return; }
+
+            // CSV头部
+            let csv = '\uFEFF时间,用户输入,AI回答,反馈\n';
+            convos.forEach(c => {
+                csv += `"${c.time}","${c.question.replace(/"/g,'""')}","${c.answer.replace(/"/g,'""').replace(/\n/g,' ')}","${c.feedback||''}"\n`;
+            });
+
+            const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `法拍房销售助手_数据_${new Date().toLocaleDateString('zh-CN').replace(/\//g,'-')}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('已导出！');
+        }
+
+        function clearData() {
+            if (!confirm('确定清除所有本地对话数据吗？此操作不可恢复！')) return;
+            localStorage.removeItem(STORAGE_KEY);
+            renderDataPanel();
+            showToast('已清除');
+        }
+        // ===================
+
+        function autoResize(ta) { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 120) + 'px'; }
+
+        function handleKeydown(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+
+        function sendQuick(text) { document.getElementById('userInput').value = text; sendMessage(); }
+
+        function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
+
+        function renderMarkdown(text) {
+            return text
+                .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+                .replace(/^## (.+)$/gm, '<h3>$1</h3>')
+                .replace(/^(?:>\s?|＞\s?)(.+)$/gm, '<blockquote>$1</blockquote>')
+                .replace(/^- (.+)$/gm, '<li>$1</li>')
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        }
+
+        function addMessage(content, isUser, convoId) {
+            const container = document.getElementById('chatContainer');
+            const welcome = container.querySelector('.welcome-card');
+            if (welcome) welcome.remove();
+
+            const div = document.createElement('div');
+            div.className = 'message ' + (isUser ? 'user' : 'assistant');
+
+            if (!isUser) {
+                div.innerHTML = `<div class="message-content">${renderMarkdown(content)}</div>
+                    <div class="feedback"><button onclick="fb(${convoId},'good',this)">👍 有用</button><button onclick="fb(${convoId},'bad',this)">👎 需改进</button></div>`;
+            } else {
+                div.textContent = content;
+            }
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function showTyping() {
+            const c = document.getElementById('chatContainer');
+            const d = document.createElement('div');
+            d.className = 'typing'; d.id = 'typing';
+            d.innerHTML = '<span></span><span></span><span></span>';
+            c.appendChild(d);
+            c.scrollTop = c.scrollHeight;
+        }
+        function hideTyping() { const t = document.getElementById('typing'); if (t) t.remove(); }
+
+        function fb(convoId, type, btn) {
+            updateFeedback(convoId, type);
+            btn.parentNode.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            showToast(type==='good' ? '感谢反馈！' : '收到！我们会优化。');
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const btn = document.getElementById('sendBtn');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            const convoId = Date.now();
+            addMessage(msg, true);
+            conversationHistory.push({role:'user', content:msg});
+            input.value = ''; input.style.height = 'auto';
+            showTyping(); btn.disabled = true;
+
+            try {
+                const r = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json','Authorization':`Bearer ${API_KEY}`},
+                    body: JSON.stringify({
+                        model: MODEL,
+                        messages: [
+                            {role:'system',content:SYSTEM_PROMPT},
+                            ...conversationHistory.slice(-10)
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 2000
+                    })
+                });
+                if (!r.ok) throw new Error('请求失败');
+                const data = await r.json();
+                hideTyping();
+                const reply = data.choices[0].message.content;
+                addMessage(reply, false, convoId);
+                conversationHistory.push({role:'assistant', content:reply});
+                
+                // 收集对话数据
+                saveConversation(msg, reply);
+            } catch(e) {
+                hideTyping();
+                addMessage('抱歉，出错了：' + e.message + '\n\n请稍后重试。', false);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+{"name": "fapai-assistant", "version": "1.0.0", "description": "法拍房销售助手 - 基于DeepSeek-V3的智能话术辅助工具", "main": "server.js", "scripts": {"start": "node server.js"}, "engines": {"node": ">=18"}}
