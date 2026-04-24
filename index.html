@@ -331,14 +331,72 @@
             background: #8b5cf6;
         }
         body.diagnosis-mode .input-container button {
-            background: linear-gradient(135deg, #a78bfa, #7c3aed);  /* 紫色渐变 */
+            background: linear-gradient(135deg, #a78bfa, #7c3aed);
             font-weight: 600;
             letter-spacing: 1px;
             padding: 10px 24px;
         }
         body.diagnosis-mode .quick-buttons {
-            background: #ede9f5;  /* 按钮栏淡紫底 */
+            background: #ede9f5;
             border-top-color: #d4c9e8;
+        }
+
+        /* ========== 课前唤醒模式（暖橙色主题）========== */
+        body.wakeup-mode {
+            background: #fdf6ee;
+        }
+        body.wakeup-mode .header {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+        body.wakeup-mode .message.assistant .message-content {
+            background: white;
+            border-left-color: #f59e0b;
+        }
+        body.wakeup-mode .message.user {
+            background: #f59e0b;
+            color: white;
+        }
+        body.wakeup-mode .input-container button {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            font-weight: 600;
+            letter-spacing: 1px;
+            padding: 10px 24px;
+        }
+        body.wakeup-mode .quick-buttons {
+            background: #fef3e2;
+            border-top-color: #fde4bc;
+        }
+        body.wakeup-mode .exit-diagnosis-btn {
+            display: block;
+        }
+
+        /* ========== 每日自检模式（清新绿色主题）========== */
+        body.checkin-mode {
+            background: #ecfdf5;
+        }
+        body.checkin-mode .header {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        body.checkin-mode .message.assistant .message-content {
+            background: white;
+            border-left-color: #10b981;
+        }
+        body.checkin-mode .message.user {
+            background: #10b981;
+            color: white;
+        }
+        body.checkin-mode .input-container button {
+            background: linear-gradient(135deg, #10b981, #059669);
+            font-weight: 600;
+            letter-spacing: 1px;
+            padding: 10px 24px;
+        }
+        body.checkin-mode .quick-buttons {
+            background: #d1fae5;
+            border-top-color: #a7f3d0;
+        }
+        body.checkin-mode .exit-diagnosis-btn {
+            display: block;
         }
         body.diagnosis-mode .input-container textarea:focus {
             border-color: #8b5cf6;
@@ -381,13 +439,11 @@
         <button onclick="sendQuick('客户说太贵了怎么办')" style="background:#e8f0fe;color:#1a73e8;">📌 客户说太贵</button>
         <button onclick="sendQuick('客户要考虑一下')" style="background:#e8f0fe;color:#1a73e8;">📌 客户要考虑</button>
         <button onclick="sendDiagnosis()" style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;font-weight:600;">🔍 帮我诊断</button>
-        <button onclick="sendQuick('课前怎么跟进客户')" style="background:#fff3e0;color:#e65100;">📢 课前唤醒</button>
-        <button onclick="sendQuick('今日数据自检')" style="background:#e8f5e9;color:#2e7d32;">📊 每日自检</button>
-        <button onclick="sendQuick('客户问有什么风险')" style="background:#e8f0fe;color:#1a73e8;">📌 客户问风险</button>
+        <button onclick="startWakeupMode()" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:white;font-weight:600;">📢 课前唤醒</button>
+        <button onclick="startCheckinMode()" style="background:linear-gradient(135deg,#10b981,#059669);color:white;font-weight:600;">📊 每日自检</button>
         <button onclick="sendQuick('转介绍怎么说（什么时机说）')" style="background:#fce4ec;color:#c62828;">🤝 转介绍时机</button>
+        <button onclick="sendQuick('客户问有什么风险')" style="background:#e8f0fe;color:#1a73e8;">📌 客户问风险</button>
         <button onclick="sendQuick('客户没买过房能参拍吗')" style="background:#e8f0fe;color:#1a73e8;">📌 没买过能拍吗</button>
-        <button onclick="sendQuick('客户问课程多少钱')" style="background:#e8f0fe;color:#1a73e8;">📌 问价格</button>
-        <button onclick="sendQuick('客户问你们靠谱吗')" style="background:#e8f0fe;color:#1a73e8;">📌 问是否靠谱</button>
     </div>
     
     <div class="chat-container" id="chatContainer">
@@ -1003,54 +1059,131 @@
 
         function handleKeydown(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
 
-        function sendQuick(text) { document.getElementById('userInput').value = text; sendMessage(); }
-
-        // ===== 销售诊断模式（带视觉切换） =====
-        let isDiagnosisMode = false;
-        let originalHeaderText, originalHeaderSub;
-
-        function sendDiagnosis() {
-            // 切换到诊断视觉模式
-            if (!isDiagnosisMode) {
-                isDiagnosisMode = true;
-                
-                // 保存原始文字
-                originalHeaderText = document.querySelector('.header h1').textContent;
-                originalHeaderSub = document.querySelector('.header p').textContent;
-                
-                // 应用诊断主题
-                document.body.classList.add('diagnosis-mode');
-                document.querySelector('.header h1').innerHTML = '🔍 <strong>销售诊断模式</strong>';
-                document.querySelector('.header p').textContent = '正在分析您的销售问题，请按引导回答';
-                document.getElementById('sendBtn').textContent = '诊断';
-                
-                // 滚动到顶部
-                document.getElementById('chatContainer').scrollTop = 0;
-            }
-
-            const diagPrompt = `【销售诊断模式】请帮我诊断我的销售问题。
-
-我会按你的引导逐步提供信息，请你：
-1. 先问我现在这个客户处于什么阶段
-2. 根据我的回答继续追问关键信息（客户说了什么、我试过什么方法）
-3. 最后给出：问题原因分析 + 3个可执行的改进动作 + 1句可以直接发给客户的话术
-
-开始吧，先问我第一个问题。`;
-            document.getElementById('userInput').value = '';
+        function sendQuick(text) {
             const input = document.getElementById('userInput');
-            input.value = diagPrompt;
+            input.value = text;
+            // 确保退出任何专用模式
+            exitSpecialMode();
             sendMessage();
         }
 
-        function exitDiagnosis() {
-            isDiagnosisMode = false;
+        // ========== 通用专用模式框架 ==========
+        let currentSpecialMode = null;  // 'diagnosis' | 'wakeup' | 'checkin' | null
+        let originalHeaderText = '';
+        let originalHeaderSub = '';
+
+        function enterSpecialMode(modeName, headerTitle, headerSub, btnText, promptText) {
+            // 先退出当前模式（如果有的话）
+            if (currentSpecialMode) {
+                document.body.classList.remove(currentSpecialMode + '-mode');
+            }
             
-            // 恢复原始样式
-            document.body.classList.remove('diagnosis-mode');
-            document.querySelector('.header h1').innerHTML = originalHeaderText || '🏠 法拍房销售助手';
-            document.querySelector('.header p').textContent = originalHeaderSub || '输入客户情况，获取专业话术建议';
-            document.getElementById('sendBtn').textContent = '发送';
+            currentSpecialMode = modeName;
+            
+            // 保存原始文字（只保存一次）
+            if (!originalHeaderText) {
+                originalHeaderText = document.querySelector('.header h1').textContent;
+                originalHeaderSub = document.querySelector('.header p').textContent;
+            }
+            
+            // 应用主题
+            document.body.classList.add(modeName + '-mode');
+            document.querySelector('.header h1').innerHTML = headerTitle;
+            document.querySelector('.header p').textContent = headerSub;
+            document.getElementById('sendBtn').textContent = btnText;
+            
+            // 滚动到顶部
+            document.getElementById('chatContainer').scrollTop = 0;
+            
+            // 发送模式引导消息
+            const input = document.getElementById('userInput');
+            input.value = promptText;
+            sendMessage();
         }
+
+        function exitSpecialMode() {
+            if (currentSpecialMode) {
+                document.body.classList.remove(currentSpecialMode + '-mode');
+                document.querySelector('.header h1').innerHTML = originalHeaderText || '🏠 法拍房销售助手';
+                document.querySelector('.header p').textContent = originalHeaderSub || '输入客户情况，获取专业话术建议';
+                document.getElementById('sendBtn').textContent = '发送';
+                currentSpecialMode = null;
+            }
+        }
+
+        // ===== 销售诊断模式 =====
+        function sendDiagnosis() {
+            const diagPrompt = `【销售诊断模式】请帮我诊断我的销售问题。
+
+我会按你的引导逐步提供信息，请你：
+1. 先问我这个客户现在处于什么阶段
+2. 根据我的回答继续追问关键细节（客户说了什么、我试过哪些方法）
+3. 最后给出：问题原因分析 + 3个可执行的改进动作 + 1句可以直接发给客户的话术
+
+开始吧，先问我第一个问题。`;
+            enterSpecialMode(
+                'diagnosis',
+                '🔍 <strong>销售诊断模式</strong>',
+                '正在分析您的销售问题，请按引导回答',
+                '诊 断',
+                diagPrompt
+            );
+        }
+
+        // ===== 课前唤醒模式 =====
+        function startWakeupMode() {
+            const wakeupPrompt = `【课前唤醒模式】我要做课前跟进，帮我生成课前唤醒话术。
+
+请先问清楚以下信息再给话术：
+1. 客户叫什么？目前处于什么状态？（已报名未听课 / 已报名待开课 / 听了一半）
+2. 距离开课还有多长时间？
+3. 客户之前表现如何？（积极 / 一般 / 冷淡）
+
+根据我的回答，给我：
+- 课前24小时的唤醒话术
+- 开课当天早上的提醒话术  
+- 课程结束后的跟进话术
+
+开始吧，先问我第一个问题。`;
+            enterSpecialMode(
+                'wakeup',
+                '📢 <strong>课前唤醒模式</strong>',
+                '告诉我客户情况，生成专属唤醒话术',
+                '生 成',
+                wakeupPrompt
+            );
+        }
+
+        // ===== 每日自检模式 =====
+        function startCheckinMode() {
+            const checkinPrompt = `【每日数据自检模式】我要做今日PDCA数据自查。
+
+请按照以下顺序逐一询问我的数据：
+
+第1步：线索获取 — 今天新加了几个有效微信？目标多少？
+第2步：私域承接 — 发了资料的有几个？首响率怎么样？
+第3步：公开课听课 — 有几个人确认来听？实际听课率？
+第4步：1980元转化 — 今天成交几单？转化率达标吗？
+第5步：1万元升单 — 有没有从1980升上来的？
+第6步：回款数据 — 今日回款金额？
+
+每一步我回答后，你判断是否达标。最后给出：
+- 今日整体评分（满分100分）
+- 最薄弱的1-2个环节
+- 明天重点要抓的3件事
+
+开始吧，先问第1步线索数据。`;
+            enterSpecialMode(
+                'checkin',
+                '📊 <strong>每日自检模式</strong>',
+                '按步骤汇报今日数据，AI帮你做PDCA分析',
+                '提 交',
+                checkinPrompt
+            );
+        }
+
+        // 退出按钮点击事件
+        function exitDiagnosis() { exitSpecialMode(); }
 
         function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
 
