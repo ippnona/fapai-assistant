@@ -175,6 +175,149 @@
         .welcome-card { text-align: center; padding: 30px 20px; color: #888; }
         .welcome-card h2 { color: #333; margin-bottom: 10px; font-size: 18px; }
         .welcome-card p { font-size: 13px; line-height: 1.6; }
+
+        /* 数据面板 */
+        .data-panel-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #764ba2;
+            color: white;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .data-panel-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 40px;
+            overflow-y: auto;
+        }
+        .data-panel-overlay.show { display: flex; }
+        .data-panel-content {
+            background: white;
+            width: 90%;
+            max-width: 800px;
+            max-height: 85vh;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 0 auto 40px;
+            display: flex;
+            flex-direction: column;
+        }
+        .data-panel-header {
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .data-panel-header h3 { font-size: 16px; }
+        .data-panel-header button {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .data-panel-body {
+            padding: 16px 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .stat-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .stat-card {
+            flex: 1;
+            background: #f8f9fa;
+            padding: 14px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-card .num { font-size: 24px; font-weight: bold; color: #667eea; }
+        .stat-card .label { font-size: 12px; color: #888; margin-top: 4px; }
+        .conv-item {
+            background: #fafafa;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 10px;
+        }
+        .conv-item .time { font-size: 11px; color: #aaa; margin-bottom: 6px; }
+        .conv-item .q {
+            background: #e8eaf6;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+        .conv-item .a {
+            background: #f0f0f0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            white-space: pre-line;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .conv-item .tags { display: flex; gap: 6px; margin-top: 8px; }
+        .tag {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+        .tag-good { background: #e8f5e9; color: #2e7d32; }
+        .tag-bad { background: #ffebee; color: #c62828; }
+        .tag-none { background: #f5f5f5; color: #999; }
+        .export-btn {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+        .clear-btn {
+            width: 100%;
+            padding: 10px;
+            background: transparent;
+            color: #ff4d4f;
+            border: 1px solid #ff4d4f;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #ccc;
+        }
     </style>
 </head>
 <body>
@@ -205,6 +348,20 @@
     <div class="input-container">
         <textarea id="userInput" placeholder="输入客户情况，比如：客户说太贵了..." rows="1" oninput="autoResize(this)" onkeydown="handleKeydown(event)"></textarea>
         <button id="sendBtn" onclick="sendMessage()">发送</button>
+    </div>
+
+    <!-- 数据收集按钮 -->
+    <button class="data-panel-btn" onclick="toggleDataPanel()" title="查看对话数据">📊</button>
+
+    <!-- 数据面板 -->
+    <div class="data-panel-overlay" id="dataPanel" onclick="if(event.target===this)this.classList.remove('show')">
+        <div class="data-panel-content">
+            <div class="data-panel-header">
+                <h3>📊 对话数据统计</h3>
+                <button onclick="document.getElementById('dataPanel').classList.remove('show')">关闭</button>
+            </div>
+            <div class="data-panel-body" id="dataPanelBody"></div>
+        </div>
     </div>
 
     <div class="toast" id="toast"></div>
@@ -296,6 +453,142 @@
 - ❌ 不要泄露其他客户的具体房源信息（隐私保护）`;
 
         let conversationHistory = [];
+        
+        // ===== 数据收集 =====
+        const STORAGE_KEY = '_fapai_convos';
+
+        function loadConversations() {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        }
+
+        function saveConversation(userMsg, aiReply) {
+            let convos = loadConversations();
+            convos.push({
+                id: Date.now(),
+                time: new Date().toISOString(),
+                question: userMsg,
+                answer: aiReply,
+                feedback: null  // null | 'good' | 'bad'
+            });
+            // 保留最近500条
+            if (convos.length > 500) convos = convos.slice(-500);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(convos));
+        }
+
+        function updateFeedback(convoId, type) {
+            let convos = loadConversations();
+            const item = convos.find(c => c.id === convoId);
+            if (item) item.feedback = type;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(convos));
+        }
+
+        // ===== 数据面板 =====
+        function toggleDataPanel() {
+            document.getElementById('dataPanel').classList.toggle('show');
+            renderDataPanel();
+        }
+
+        function renderDataPanel() {
+            const convos = loadConversations();
+            const body = document.getElementById('dataPanelBody');
+
+            if (convos.length === 0) {
+                body.innerHTML = '<div class="empty-state">暂无对话记录<br><small style="color:#ccc">员工使用后会自动收集</small></div>';
+                return;
+            }
+
+            // 统计
+            const total = convos.length;
+            const goodCount = convos.filter(c => c.feedback === 'good').length;
+            const badCount = convos.filter(c => c.feedback === 'bad').length;
+
+            // 问题分类统计
+            const categories = {};
+            convos.forEach(c => {
+                let cat = '其他';
+                const q = c.question;
+                if (q.includes('贵')) cat = '价格异议';
+                else if (q.includes('考虑') || q.includes('看看')) cat = '犹豫/拖延';
+                else if (q.includes('风险') || q.includes('靠谱')) cat = '信任问题';
+                else if (q.includes('价格') || q.includes('多少')) cat = '价格咨询';
+                else if (q.includes('没买过') || q.includes('能参拍')) cat = '资质咨询';
+                else if (q.includes('课程') || q.includes('服务')) cat = '产品咨询';
+                categories[cat] = (categories[cat] || 0) + 1;
+            });
+
+            let statsHtml = `
+                <div class="stat-row">
+                    <div class="stat-card"><div class="num">${total}</div><div class="label">总对话数</div></div>
+                    <div class="stat-card"><div class="num">${goodCount}</div><div class="label">👍 有用</div></div>
+                    <div class="stat-card"><div class="num">${badCount}</div><div class="label">👎 需改进</div></div>
+                    <div class="stat-card"><div class="num">${total > 0 ? Math.round(goodCount/(goodCount+badCount)*100) : 0}%</div><div class="label">好评率</div></div>
+                </div>
+                <h4 style="margin-bottom:10px;font-size:14px;">📋 问题类型分布</h4>
+                <div class="stat-row" style="margin-bottom:20px;">
+                    ${Object.entries(categories).map(([k,v]) =>
+                        `<div class="stat-card"><div class="num">${v}</div><div class="label">${k}</div></div>`
+                    ).join('')}
+                </div>
+                <h4 style="margin-bottom:10px;font-size:14px;">💬 最近对话记录（倒序）</h4>
+            `;
+
+            // 最近20条对话
+            const recent = [...convos].reverse().slice(0, 20);
+            statsHtml += recent.map(c => `
+                <div class="conv-item">
+                    <div class="time">⏰ ${new Date(c.time).toLocaleString('zh-CN')}</div>
+                    <div class="q">❓ ${escapeHtml(c.question)}</div>
+                    <div class="a">💬 ${escapeHtml(c.answer.substring(0, 300))}${c.answer.length > 300 ? '...' : ''}</div>
+                    <div class="tags">
+                        <span class="tag tag-${c.feedback || 'none'}">${
+                            c.feedback === 'good' ? '👍 有用' :
+                            c.feedback === 'bad' ? '👎 需改进' : '○ 未评价'
+                        }</span>
+                    </div>
+                </div>
+            `).join('');
+
+            statsHtml += `
+                <button class="export-btn" onclick="exportData()">📥 导出所有数据（CSV）</button>
+                <button class="clear-btn" onclick="clearData()">🗑 清除本地数据</button>
+            `;
+
+            body.innerHTML = statsHtml;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function exportData() {
+            const convos = loadConversations();
+            if (convos.length === 0) { alert('没有数据可导出'); return; }
+
+            // CSV头部
+            let csv = '\uFEFF时间,用户输入,AI回答,反馈\n';
+            convos.forEach(c => {
+                csv += `"${c.time}","${c.question.replace(/"/g,'""')}","${c.answer.replace(/"/g,'""').replace(/\n/g,' ')}","${c.feedback||''}"\n`;
+            });
+
+            const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `法拍房销售助手_数据_${new Date().toLocaleDateString('zh-CN').replace(/\//g,'-')}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('已导出！');
+        }
+
+        function clearData() {
+            if (!confirm('确定清除所有本地对话数据吗？此操作不可恢复！')) return;
+            localStorage.removeItem(STORAGE_KEY);
+            renderDataPanel();
+            showToast('已清除');
+        }
+        // ===================
 
         function autoResize(ta) { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 120) + 'px'; }
 
@@ -314,7 +607,7 @@
                 .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
         }
 
-        function addMessage(content, isUser) {
+        function addMessage(content, isUser, convoId) {
             const container = document.getElementById('chatContainer');
             const welcome = container.querySelector('.welcome-card');
             if (welcome) welcome.remove();
@@ -323,9 +616,8 @@
             div.className = 'message ' + (isUser ? 'user' : 'assistant');
 
             if (!isUser) {
-                const mid = Date.now();
                 div.innerHTML = `<div class="message-content">${renderMarkdown(content)}</div>
-                    <div class="feedback"><button onclick="fb(${mid},'good',this)">👍 有用</button><button onclick="fb(${mid},'bad',this)">👎 需改进</button></div>`;
+                    <div class="feedback"><button onclick="fb(${convoId},'good',this)">👍 有用</button><button onclick="fb(${convoId},'bad',this)">👎 需改进</button></div>`;
             } else {
                 div.textContent = content;
             }
@@ -343,10 +635,8 @@
         }
         function hideTyping() { const t = document.getElementById('typing'); if (t) t.remove(); }
 
-        function fb(id, type, btn) {
-            let fbs = JSON.parse(localStorage.getItem('_fb') || '[]');
-            fbs.push({id,type,time:new Date().toISOString()});
-            localStorage.setItem('_fb', JSON.stringify(fbs));
+        function fb(convoId, type, btn) {
+            updateFeedback(convoId, type);
             btn.parentNode.querySelectorAll('button').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             showToast(type==='good' ? '感谢反馈！' : '收到！我们会优化。');
@@ -358,6 +648,7 @@
             const msg = input.value.trim();
             if (!msg) return;
 
+            const convoId = Date.now();
             addMessage(msg, true);
             conversationHistory.push({role:'user', content:msg});
             input.value = ''; input.style.height = 'auto';
@@ -381,8 +672,11 @@
                 const data = await r.json();
                 hideTyping();
                 const reply = data.choices[0].message.content;
-                addMessage(reply, false);
+                addMessage(reply, false, convoId);
                 conversationHistory.push({role:'assistant', content:reply});
+                
+                // 收集对话数据
+                saveConversation(msg, reply);
             } catch(e) {
                 hideTyping();
                 addMessage('抱歉，出错了：' + e.message + '\n\n请稍后重试。', false);
