@@ -5,38 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>法拍房销售助手</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #f5f5f5;
             height: 100vh;
             display: flex;
             flex-direction: column;
         }
-        
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 16px 20px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        
-        .header h1 {
-            font-size: 18px;
-            font-weight: 600;
-        }
-        
-        .header p {
-            font-size: 12px;
-            opacity: 0.9;
-            margin-top: 4px;
-        }
-        
+        .header h1 { font-size: 18px; font-weight: 600; }
+        .header p { font-size: 12px; opacity: 0.9; margin-top: 4px; }
         .chat-container {
             flex: 1;
             overflow-y: auto;
@@ -45,7 +29,6 @@
             flex-direction: column;
             gap: 12px;
         }
-        
         .message {
             max-width: 85%;
             padding: 12px 16px;
@@ -54,14 +37,12 @@
             line-height: 1.6;
             word-wrap: break-word;
         }
-        
         .message.user {
             align-self: flex-end;
             background: #667eea;
             color: white;
             border-bottom-right-radius: 4px;
         }
-        
         .message.assistant {
             align-self: flex-start;
             background: white;
@@ -69,7 +50,6 @@
             border-bottom-left-radius: 4px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        
         .message.assistant h3 {
             font-size: 13px;
             color: #667eea;
@@ -77,11 +57,7 @@
             padding-bottom: 4px;
             border-bottom: 1px solid #eee;
         }
-        
-        .message.assistant h3:first-child {
-            margin-top: 0;
-        }
-        
+        .message.assistant h3:first-child { margin-top: 0; }
         .message.assistant blockquote {
             background: #f8f9fa;
             padding: 10px 14px;
@@ -90,16 +66,7 @@
             border-radius: 0 8px 8px 0;
             font-style: normal;
         }
-        
-        .message.assistant ul {
-            margin: 8px 0;
-            padding-left: 20px;
-        }
-        
-        .message.assistant li {
-            margin: 4px 0;
-        }
-        
+        .message-content { white-space: pre-line; }
         .feedback {
             display: flex;
             gap: 8px;
@@ -107,27 +74,18 @@
             padding-top: 8px;
             border-top: 1px solid #eee;
         }
-        
         .feedback button {
             background: none;
             border: 1px solid #ddd;
-            padding: 4px 12px;
+            padding: 4px 14px;
             border-radius: 16px;
             cursor: pointer;
             font-size: 12px;
             transition: all 0.2s;
         }
-        
-        .feedback button:hover {
-            background: #f0f0f0;
-        }
-        
-        .feedback button.active {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-        
+        .feedback button:hover { background: #f0f0f0; }
+        .feedback button.active.good { background: #52c41a; color: white; border-color: #52c41a; }
+        .feedback button.active.bad { background: #ff4d4f; color: white; border-color: #ff4d4f; }
         .input-container {
             background: white;
             padding: 12px 16px;
@@ -136,7 +94,6 @@
             gap: 10px;
             align-items: flex-end;
         }
-        
         .input-container textarea {
             flex: 1;
             border: 1px solid #ddd;
@@ -149,11 +106,7 @@
             max-height: 120px;
             font-family: inherit;
         }
-        
-        .input-container textarea:focus {
-            border-color: #667eea;
-        }
-        
+        .input-container textarea:focus { border-color: #667eea; }
         .input-container button {
             background: #667eea;
             color: white;
@@ -163,17 +116,10 @@
             font-size: 14px;
             cursor: pointer;
             transition: background 0.2s;
+            white-space: nowrap;
         }
-        
-        .input-container button:hover {
-            background: #5a6fd6;
-        }
-        
-        .input-container button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        
+        .input-container button:hover { background: #5a6fd6; }
+        .input-container button:disabled { background: #ccc; cursor: not-allowed; }
         .typing {
             display: flex;
             gap: 4px;
@@ -183,23 +129,15 @@
             border-radius: 16px;
             border-bottom-left-radius: 4px;
         }
-        
         .typing span {
-            width: 8px;
-            height: 8px;
+            width: 8px; height: 8px;
             background: #999;
             border-radius: 50%;
             animation: typing 1.4s infinite;
         }
-        
         .typing span:nth-child(2) { animation-delay: 0.2s; }
         .typing span:nth-child(3) { animation-delay: 0.4s; }
-        
-        @keyframes typing {
-            0%, 60%, 100% { transform: translateY(0); }
-            30% { transform: translateY(-10px); }
-        }
-        
+        @keyframes typing { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-10px)} }
         .quick-buttons {
             display: flex;
             gap: 8px;
@@ -208,7 +146,6 @@
             background: white;
             border-top: 1px solid #eee;
         }
-        
         .quick-buttons button {
             white-space: nowrap;
             background: #f0f0f0;
@@ -219,116 +156,66 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-        
-        .quick-buttons button:hover {
-            background: #667eea;
-            color: white;
-        }
-        
-        .api-config {
+        .quick-buttons button:hover { background: #667eea; color: white; }
+        .toast {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            display: none;
-            justify-content: center;
-            align-items: center;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 13px;
             z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
         }
-        
-        .api-config.show {
-            display: flex;
-        }
-        
-        .api-config-content {
-            background: white;
-            padding: 24px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 400px;
-        }
-        
-        .api-config-content h3 {
-            margin-bottom: 16px;
-        }
-        
-        .api-config-content input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            font-size: 14px;
-        }
-        
-        .api-config-content button {
-            width: 100%;
-            padding: 12px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        
-        .settings-btn {
-            position: fixed;
-            top: 16px;
-            right: 16px;
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 12px;
-        }
+        .toast.show { opacity: 1; }
+        .welcome-card { text-align: center; padding: 30px 20px; color: #888; }
+        .welcome-card h2 { color: #333; margin-bottom: 10px; font-size: 18px; }
+        .welcome-card p { font-size: 13px; line-height: 1.6; }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>🏠 法拍房销售助手</h1>
         <p>输入客户情况，获取专业话术建议</p>
-        <button class="settings-btn" onclick="showApiConfig()">⚙️ 设置</button>
     </div>
     
     <div class="quick-buttons">
-        <button onclick="sendQuick('客户说太贵了怎么办')">客户说太贵</button>
-        <button onclick="sendQuick('客户要考虑一下')">客户要考虑</button>
-        <button onclick="sendQuick('客户问有什么风险')">客户问风险</button>
-        <button onclick="sendQuick('客户没买过房能参拍吗')">没买过房</button>
-        <button onclick="sendQuick('客户问课程多少钱')">问价格</button>
+        <button onclick="sendQuick('客户说太贵了怎么办')">📌 客户说太贵</button>
+        <button onclick="sendQuick('客户要考虑一下')">📌 客户要考虑</button>
+        <button onclick="sendQuick('客户问有什么风险')">📌 客户问风险</button>
+        <button onclick="sendQuick('客户没买过房能参拍吗')">📌 没买过能拍吗</button>
+        <button onclick="sendQuick('客户问课程多少钱')">📌 问价格</button>
+        <button onclick="sendQuick('客户问你们靠谱吗')">📌 问是否靠谱</button>
     </div>
     
     <div class="chat-container" id="chatContainer">
-        <div class="message assistant">
-            你好！我是法拍房销售助手。请描述客户的情况，比如：<br><br>
-            • 客户说了什么？<br>
-            • 客户是什么背景？<br>
-            • 你卡在哪个环节？<br><br>
-            我会帮你分析客户意向，给出话术建议。
+        <div class="welcome-card">
+            <h2>👋 你好，我是法拍房销售助手</h2>
+            <p>请描述客户的情况，我会帮你：<br><br>
+            • 📊 分析客户意向等级<br>
+            • 💬 提供可直接使用的话术<br>
+            • ⚠️ 给出注意事项和转化策略</p>
         </div>
     </div>
     
     <div class="input-container">
-        <textarea id="userInput" placeholder="输入客户情况..." rows="1" oninput="autoResize(this)" onkeydown="handleKeydown(event)"></textarea>
+        <textarea id="userInput" placeholder="输入客户情况，比如：客户说太贵了..." rows="1" oninput="autoResize(this)" onkeydown="handleKeydown(event)"></textarea>
         <button id="sendBtn" onclick="sendMessage()">发送</button>
     </div>
-    
-    <div class="api-config" id="apiConfig">
-        <div class="api-config-content">
-            <h3>API 配置</h3>
-            <input type="password" id="apiKey" placeholder="输入硅基流动 API Key">
-            <input type="text" id="apiUrl" placeholder="API URL（可选）" value="https://api.siliconflow.cn/v1/chat/completions">
-            <button onclick="saveApiConfig()">保存</button>
-        </div>
-    </div>
+
+    <div class="toast" id="toast"></div>
 
     <script>
-        // 系统提示词
+        // ===== 配置区域 =====
+        const API_KEY = 'sk-rkhnlqcqsriybfncvbdbubnrjnnznvvtsfzlaiaydvbngwmh';
+        const API_URL = 'https://api.siliconflow.cn/v1/chat/completions';
+        const MODEL = 'deepseek-ai/DeepSeek-V3';
+        // ===================
+
         const SYSTEM_PROMPT = `你是XX公司法拍房业务的资深销售顾问，拥有5年以上销冠经验。你的任务是帮助公司销售员工应对各种客户情况，提供专业的客户分析、话术建议和转化策略。
 
 ## 公司业务
@@ -408,171 +295,101 @@
 - ❌ 不要过度逼单，法拍房决策周期长，要有耐心
 - ❌ 不要泄露其他客户的具体房源信息（隐私保护）`;
 
-        let apiKey = localStorage.getItem('siliconflow_api_key') || '';
-        let apiUrl = localStorage.getItem('siliconflow_api_url') || 'https://api.siliconflow.cn/v1/chat/completions';
         let conversationHistory = [];
 
-        function autoResize(textarea) {
-            textarea.style.height = 'auto';
-            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
-        }
+        function autoResize(ta) { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 120) + 'px'; }
 
-        function handleKeydown(event) {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                sendMessage();
-            }
-        }
+        function handleKeydown(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
 
-        function sendQuick(text) {
-            document.getElementById('userInput').value = text;
-            sendMessage();
-        }
+        function sendQuick(text) { document.getElementById('userInput').value = text; sendMessage(); }
 
-        function showApiConfig() {
-            document.getElementById('apiKey').value = apiKey;
-            document.getElementById('apiUrl').value = apiUrl;
-            document.getElementById('apiConfig').classList.add('show');
-        }
+        function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
 
-        function saveApiConfig() {
-            apiKey = document.getElementById('apiKey').value.trim();
-            apiUrl = document.getElementById('apiUrl').value.trim();
-            localStorage.setItem('siliconflow_api_key', apiKey);
-            localStorage.setItem('siliconflow_api_url', apiUrl);
-            document.getElementById('apiConfig').classList.remove('show');
-            alert('配置已保存');
+        function renderMarkdown(text) {
+            return text
+                .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+                .replace(/^## (.+)$/gm, '<h3>$1</h3>')
+                .replace(/^(?:>\s?|＞\s?)(.+)$/gm, '<blockquote>$1</blockquote>')
+                .replace(/^- (.+)$/gm, '<li>$1</li>')
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
         }
 
         function addMessage(content, isUser) {
             const container = document.getElementById('chatContainer');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
-            
+            const welcome = container.querySelector('.welcome-card');
+            if (welcome) welcome.remove();
+
+            const div = document.createElement('div');
+            div.className = 'message ' + (isUser ? 'user' : 'assistant');
+
             if (!isUser) {
-                // 为AI回复添加反馈按钮
-                const messageId = Date.now();
-                messageDiv.innerHTML = content + `
-                    <div class="feedback">
-                        <button onclick="sendFeedback(${messageId}, 'good', this)">👍 有用</button>
-                        <button onclick="sendFeedback(${messageId}, 'bad', this)">👎 需改进</button>
-                    </div>
-                `;
+                const mid = Date.now();
+                div.innerHTML = `<div class="message-content">${renderMarkdown(content)}</div>
+                    <div class="feedback"><button onclick="fb(${mid},'good',this)">👍 有用</button><button onclick="fb(${mid},'bad',this)">👎 需改进</button></div>`;
             } else {
-                messageDiv.textContent = content;
+                div.textContent = content;
             }
-            
-            container.appendChild(messageDiv);
+            container.appendChild(div);
             container.scrollTop = container.scrollHeight;
-            return messageDiv;
         }
 
         function showTyping() {
-            const container = document.getElementById('chatContainer');
-            const typingDiv = document.createElement('div');
-            typingDiv.className = 'typing';
-            typingDiv.id = 'typingIndicator';
-            typingDiv.innerHTML = '<span></span><span></span><span></span>';
-            container.appendChild(typingDiv);
-            container.scrollTop = container.scrollHeight;
+            const c = document.getElementById('chatContainer');
+            const d = document.createElement('div');
+            d.className = 'typing'; d.id = 'typing';
+            d.innerHTML = '<span></span><span></span><span></span>';
+            c.appendChild(d);
+            c.scrollTop = c.scrollHeight;
         }
+        function hideTyping() { const t = document.getElementById('typing'); if (t) t.remove(); }
 
-        function hideTyping() {
-            const typing = document.getElementById('typingIndicator');
-            if (typing) typing.remove();
-        }
-
-        function sendFeedback(messageId, type, btn) {
-            // 收集反馈数据
-            const feedback = {
-                messageId,
-                type,
-                timestamp: new Date().toISOString(),
-                conversation: conversationHistory
-            };
-            
-            // 保存到本地存储（后续可用于迭代优化）
-            let feedbacks = JSON.parse(localStorage.getItem('feedbacks') || '[]');
-            feedbacks.push(feedback);
-            localStorage.setItem('feedbacks', JSON.stringify(feedbacks));
-            
-            // 更新按钮状态
-            const buttons = btn.parentElement.querySelectorAll('button');
-            buttons.forEach(b => b.classList.remove('active'));
+        function fb(id, type, btn) {
+            let fbs = JSON.parse(localStorage.getItem('_fb') || '[]');
+            fbs.push({id,type,time:new Date().toISOString()});
+            localStorage.setItem('_fb', JSON.stringify(fbs));
+            btn.parentNode.querySelectorAll('button').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            
-            alert(type === 'good' ? '感谢反馈！我们会继续保持。' : '收到！我们会优化这个回答。');
+            showToast(type==='good' ? '感谢反馈！' : '收到！我们会优化。');
         }
 
         async function sendMessage() {
             const input = document.getElementById('userInput');
-            const sendBtn = document.getElementById('sendBtn');
-            const message = input.value.trim();
-            
-            if (!message) return;
-            
-            if (!apiKey) {
-                alert('请先点击右上角"设置"配置API Key');
-                showApiConfig();
-                return;
-            }
-            
-            // 添加用户消息
-            addMessage(message, true);
-            conversationHistory.push({ role: 'user', content: message });
-            
-            // 清空输入框
-            input.value = '';
-            input.style.height = 'auto';
-            
-            // 显示正在输入
-            showTyping();
-            sendBtn.disabled = true;
-            
+            const btn = document.getElementById('sendBtn');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            addMessage(msg, true);
+            conversationHistory.push({role:'user', content:msg});
+            input.value = ''; input.style.height = 'auto';
+            showTyping(); btn.disabled = true;
+
             try {
-                const response = await fetch(apiUrl, {
+                const r = await fetch(API_URL, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
-                    },
+                    headers: {'Content-Type':'application/json','Authorization':`Bearer ${API_KEY}`},
                     body: JSON.stringify({
-                        model: 'deepseek-ai/DeepSeek-V3',
+                        model: MODEL,
                         messages: [
-                            { role: 'system', content: SYSTEM_PROMPT },
-                            ...conversationHistory.slice(-10) // 保留最近10轮对话
+                            {role:'system',content:SYSTEM_PROMPT},
+                            ...conversationHistory.slice(-10)
                         ],
                         temperature: 0.7,
                         max_tokens: 2000
                     })
                 });
-                
-                if (!response.ok) {
-                    throw new Error(`API错误: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                const assistantMessage = data.choices[0].message.content;
-                
-                // 隐藏正在输入，添加AI回复
+                if (!r.ok) throw new Error('请求失败');
+                const data = await r.json();
                 hideTyping();
-                addMessage(assistantMessage, false);
-                conversationHistory.push({ role: 'assistant', content: assistantMessage });
-                
-            } catch (error) {
+                const reply = data.choices[0].message.content;
+                addMessage(reply, false);
+                conversationHistory.push({role:'assistant', content:reply});
+            } catch(e) {
                 hideTyping();
-                addMessage(`抱歉，出错了：${error.message}\n\n请检查API Key是否正确，或稍后重试。`, false);
+                addMessage('抱歉，出错了：' + e.message + '\n\n请稍后重试。', false);
             } finally {
-                sendBtn.disabled = false;
+                btn.disabled = false;
             }
         }
-
-        // 点击弹窗外部关闭
-        document.getElementById('apiConfig').addEventListener('click', function(e) {
-            if (e.target === this) {
-                this.classList.remove('show');
-            }
-        });
     </script>
 </body>
 </html>
