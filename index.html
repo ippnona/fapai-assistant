@@ -1064,8 +1064,14 @@
             input.value = text;
             // 确保退出任何专用模式
             exitSpecialMode();
+            console.log('[快捷按钮] 发送:', text);
             sendMessage();
         }
+
+        // 调试：确认所有按钮都能响应点击
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('[初始化] 页面加载完成，按钮数量:', document.querySelectorAll('.quick-buttons button').length);
+        });
 
         // ========== 通用专用模式框架 ==========
         let currentSpecialMode = null;  // 'diagnosis' | 'wakeup' | 'checkin' | null
@@ -1073,6 +1079,8 @@
         let originalHeaderSub = '';
 
         function enterSpecialMode(modeName, headerTitle, headerSub, btnText, promptText) {
+            console.log('[模式切换] 进入模式:', modeName);
+            
             // 先退出当前模式（如果有的话）
             if (currentSpecialMode) {
                 document.body.classList.remove(currentSpecialMode + '-mode');
@@ -1095,10 +1103,13 @@
             // 滚动到顶部
             document.getElementById('chatContainer').scrollTop = 0;
             
-            // 发送模式引导消息
-            const input = document.getElementById('userInput');
-            input.value = promptText;
-            sendMessage();
+            // 发送模式引导消息（延迟一点确保UI已更新）
+            setTimeout(function() {
+                const input = document.getElementById('userInput');
+                input.value = promptText;
+                console.log('[模式切换] 准备发送引导消息，长度:', promptText.length);
+                sendMessage();
+            }, 100);
         }
 
         function exitSpecialMode() {
@@ -1237,6 +1248,8 @@
             const msg = input.value.trim();
             if (!msg) return;
 
+            console.log('[发送消息] 内容长度:', msg.length, '前20字:', msg.substring(0, 20));
+
             const convoId = Date.now();
             addMessage(msg, true);
             conversationHistory.push({role:'user', content:msg});
@@ -1244,6 +1257,7 @@
             showTyping(); btn.disabled = true;
 
             try {
+                console.log('[API] 正在请求...');
                 const r = await fetch(API_URL, {
                     method: 'POST',
                     headers: {'Content-Type':'application/json','Authorization':`Bearer ${API_KEY}`},
@@ -1257,18 +1271,25 @@
                         max_tokens: 2000
                     })
                 });
-                if (!r.ok) throw new Error('请求失败');
+                console.log('[API] 响应状态:', r.status);
+                if (!r.ok) {
+                    const errText = await r.text();
+                    console.error('[API] 错误详情:', errText);
+                    throw new Error('API返回错误(' + r.status + ')');
+                }
                 const data = await r.json();
                 hideTyping();
                 const reply = data.choices[0].message.content;
+                console.log('[API] 回复长度:', reply.length);
                 addMessage(reply, false, convoId);
                 conversationHistory.push({role:'assistant', content:reply});
                 
                 // 收集对话数据
                 saveConversation(msg, reply);
             } catch(e) {
+                console.error('[错误]', e);
                 hideTyping();
-                addMessage('抱歉，出错了：' + e.message + '\n\n请稍后重试。', false);
+                addMessage('抱歉，出错了：' + e.message + '\n\n请检查网络连接后重试。', false);
             } finally {
                 btn.disabled = false;
             }
