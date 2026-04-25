@@ -9,9 +9,28 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #f5f5f5;
-            height: 100vh;
+            min-height: 100vh;
+            height: 100%;
             display: flex;
             flex-direction: column;
+        }
+        @media (max-width: 600px) {
+            body { min-height: -webkit-fill-available; }
+            .header { padding: 12px 14px; }
+            .header h1 { font-size: 16px; }
+            .header p { font-size: 11px; }
+            .chat-container { padding: 10px; gap: 8px; }
+            .message { font-size: 13px; padding: 10px 12px; max-width: 90%; }
+            .input-container { padding: 10px 12px; gap: 8px; }
+            .input-container textarea { font-size: 13px; padding: 8px 14px; }
+            .input-container button { padding: 8px 16px; font-size: 13px; }
+            .quick-buttons { padding: 6px 10px; gap: 6px; }
+            .quick-buttons button { padding: 5px 10px; font-size: 11px; border-radius: 14px; }
+            .login-card { padding: 30px 24px; width: 92%; }
+            .login-card h2 { font-size: 19px; }
+            .login-card input[type="password"] { padding: 12px 14px; font-size: 16px; }
+            .exit-diagnosis-btn { padding: 4px 10px; font-size: 11px; top: 8px; left: 10px; }
+            .data-panel-btn { top: 8px; right: 10px; width: 34px; height: 34px; font-size: 16px; }
         }
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -548,7 +567,10 @@
     </div>
 
     <div class="header">
-    
+        <h1>🏠 法拍房销售助手</h1>
+        <p>输入客户情况，获取专业话术建议</p>
+    </div>
+
     <div class="quick-buttons">
         <button onclick="sendQuick('客户说太贵了怎么办')" style="background:#e8f0fe;color:#1a73e8;">📌 客户说太贵</button>
         <button onclick="sendQuick('客户要考虑一下')" style="background:#e8f0fe;color:#1a73e8;">📌 客户要考虑</button>
