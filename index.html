@@ -427,13 +427,99 @@
         .exit-diagnosis-btn:hover {
             background: rgba(255,255,255,0.35);
         }
+        /* ===== 密码保护登录页 ===== */
+        .login-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+        }
+        .login-overlay.hidden { display: none !important; }
+        .login-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px 36px;
+            width: 90%;
+            max-width: 380px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .login-card h2 {
+            font-size: 22px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .login-card p {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 28px;
+            line-height: 1.5;
+        }
+        .login-card input[type="password"] {
+            width: 100%;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 14px 18px;
+            font-size: 17px;
+            outline: none;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+            letter-spacing: 2px;
+        }
+        .login-card input[type="password"]:focus {
+            border-color: #667eea;
+        }
+        .login-card button {
+            width: 100%;
+            margin-top: 16px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+            font-weight: 600;
+        }
+        .login-card button:hover { opacity: 0.9; }
+        .login-card button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .login-error {
+            color: #ff4d4f;
+            font-size: 13px;
+            margin-top: 12px;
+            display: none;
+        }
+        .login-error.show { display: block; animation: shake 0.4s; }
+        @keyframes shake {
+            0%,100%{transform:translateX(0)}
+            25%{transform:translateX(-8px)} 75%{transform:translateX(8px)}
+        }
+        .login-logo {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
     </style>
 </head>
+
 <body>
-    <div class="header">
-        <h1>🏠 法拍房销售助手</h1>
-        <p>输入客户情况，获取专业话术建议</p>
+
+    <!-- 密码保护登录页 -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-card">
+            <div class="login-logo">🏠</div>
+            <h2>法拍房销售助手</h2>
+            <p>请输入访问密码以继续使用</p>
+            <input type="password" id="loginPassword" placeholder="请输入密码" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()">
+            <button id="loginBtn" onclick="doLogin()">进入系统</button>
+            <div class="login-error" id="loginError">密码错误，请重新输入</div>
+        </div>
     </div>
+
+    <div class="header">
     
     <div class="quick-buttons">
         <button onclick="sendQuick('客户说太贵了怎么办')" style="background:#e8f0fe;color:#1a73e8;">📌 客户说太贵</button>
@@ -481,6 +567,55 @@
     <div class="toast" id="toast"></div>
 
     <script>
+        // ===== 密码保护（防止同行复制内容）=====
+        // 密码：fapai2026 （可以随时修改）
+        const ACCESS_PASSWORD = 'fapai2026';
+        const LOGIN_KEY = '_fp_auth';
+
+        function doLogin() {
+            const input = document.getElementById('loginPassword');
+            const err = document.getElementById('loginError');
+            const btn = document.getElementById('loginBtn');
+            
+            if (input.value === ACCESS_PASSWORD) {
+                // 验证通过，隐藏登录页
+                localStorage.setItem(LOGIN_KEY, '1');
+                document.getElementById('loginOverlay').classList.add('hidden');
+                input.value = '';
+                err.classList.remove('show');
+            } else {
+                // 密码错误，抖动提示
+                err.classList.add('show');
+                setTimeout(() => err.classList.remove('show'), 400);
+                input.value = '';
+                input.focus();
+                
+                // 错误3次后锁定5秒
+                if (!window._loginFails) window._loginFails = 0;
+                window._loginFails++;
+                if (window._loginFails >= 3) {
+                    btn.disabled = true;
+                    btn.textContent = '请稍后再试...';
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.textContent = '进入系统';
+                        window._loginFails = 0;
+                    }, 5000);
+                }
+            }
+        }
+
+        // 页面加载时检查是否已登录
+        (function() {
+            if (localStorage.getItem(LOGIN_KEY) === '1') {
+                document.getElementById('loginOverlay').classList.add('hidden');
+            } else {
+                // 自动聚焦密码框
+                setTimeout(() => document.getElementById('loginPassword').focus(), 100);
+            }
+        })();
+        // =========================================
+
         // ===== 配置区域 =====
         const API_KEY = 'sk-rkhnlqcqsriybfncvbdbubnrjnnznvvtsfzlaiaydvbngwmh';
         const API_URL = 'https://api.siliconflow.cn/v1/chat/completions';
